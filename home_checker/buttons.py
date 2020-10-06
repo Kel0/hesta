@@ -12,7 +12,7 @@ def init_welcome_help_buttons() -> ReplyKeyboardMarkup:
     get_students = KeyboardButton(text="Get students list")
     check_commits = KeyboardButton(text="Check for commit")
 
-    kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=3)
     kb.add(get_groups)
     kb.add(get_students)
     kb.add(create_group)

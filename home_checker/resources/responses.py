@@ -1,10 +1,11 @@
 WELCOME = "Hi mate. This bot intended for check github repo. commits🤖"
 COMMANDS = (
-    "Get list of groups - /groups_list \n"
-    "Create group - /group \n"
-    "Get students - /students \n"
-    "Create students - /create_students \n"
-    "Check for commit - /check_commits"
+    "Commands📝: \n"
+    "- Get list of groups - /groups_list \n"
+    "- Create group - /create_group \n"
+    "- Get students - /students \n"
+    "- Create students - /create_students \n"
+    "- Check for commit - /check_commits"
 )
 SEND_GROUP = "Send group name..."
 GROUP_FAIL = "Group hasn't been created"

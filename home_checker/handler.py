@@ -82,7 +82,7 @@ async def handle_groups_list(message: types.Message):
     )
 
 
-@dp.message_handler(commands=["group"])
+@dp.message_handler(commands=["create_group"])
 @dp.message_handler(Text(equals="Create group", ignore_case=True))
 async def handle_group(message: types.Message):
     """
@@ -145,8 +145,14 @@ async def handle_students(message: types.Message):
         await message.reply(text, reply_markup=types.ReplyKeyboardRemove())
 
     elif len(group_name) == 0:
+        groups = await get_groups()
+        if groups is None:
+            groups = []
+
         await StudentsForm.group.set()
-        await message.reply(SEND_GROUP, reply_markup=init_cancel_button())
+        await message.reply(SEND_GROUP, reply_markup=init_n_count_keyboard_buttons(
+            [{"text": group.group} for group in groups], ""
+        ))
 
 
 @dp.message_handler(state=StudentsForm.group)
@@ -265,7 +271,6 @@ async def set_git_repo(message: types.Message, state: FSMContext):
                     )
 
                 except Exception as e_info:
-                    print(e_info)
                     logger.error(e_info)
                     return
 
