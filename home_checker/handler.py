@@ -10,7 +10,8 @@ from aiogram.dispatcher.filters import Text
 
 from settings import API_TOKEN
 
-from .states import CreateStudentForm, GroupForm, StudentsForm
+from .github import get_commits_of_repository
+from .states import CreateStudentForm, Github, GroupForm, StudentsForm
 
 from .utils import (  # isort:skip
     create_group,
@@ -34,6 +35,7 @@ from .resources.responses import (  # isort:skip
     STUDENT_SUCCESS,
     STUDENT_FAIL,
     FAIL,
+    SEND_GIT_REPO,
 )
 
 from .buttons import (  # isort:skip
@@ -72,7 +74,7 @@ async def handle_groups_list(message: types.Message):
             groups_md_text.append(md.text(f"Name: {md.bold(group.group)}"))
             groups_buttons.append({"text": group.group})
 
-        keyboard = init_n_count_keyboard_buttons(groups_buttons)
+        keyboard = init_n_count_keyboard_buttons(groups_buttons, "Get students of")
         groups_in_text = md.text(*groups_md_text, sep="\n")
 
     await message.answer(
@@ -184,6 +186,99 @@ async def add_student(message: types.Message, state: FSMContext):
         await message.reply(STUDENT_SUCCESS, reply_markup=types.ReplyKeyboardRemove())
     elif status is None:
         await message.reply(STUDENT_FAIL, reply_markup=types.ReplyKeyboardRemove())
+
+    await state.finish()
+
+
+@dp.message_handler(commands=["check_commits"])
+async def handle_commits(message: types.Message):
+    groups = await get_groups()
+    if groups is None:
+        groups = []
+
+    buttons = init_n_count_keyboard_buttons(
+        [{"text": group.group} for group in groups], "Check students of"
+    )
+    await Github.group.set()
+    await message.reply(SEND_GROUP, reply_markup=buttons)
+
+
+@dp.message_handler(state=Github.group)
+async def set_git_group(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        group = message.text.upper()
+
+        if "Check students" in message.text:
+            group_list: List[str] = re.findall(r"([\d]{1,3}\D+)", message.text)
+            if len(group_list) > 0:
+                group = group_list[0].upper()
+
+        data["group"] = group
+
+    await Github.next()
+    await message.reply(SEND_GIT_REPO, reply_markup=init_cancel_button())
+
+
+@dp.message_handler(state=Github.repository)
+async def set_git_repo(message: types.Message, state: FSMContext):
+    checked_list = ""
+    checked_list_text = []
+
+    async with state.proxy() as data:
+        data["repository"] = message.text.split("-")[0].strip()
+        commit_name = message.text.split("-")[1].strip()
+
+        students = await get_students(group=data["group"])
+        if students is not None:
+            for student in students:
+                try:
+                    is_continue = False
+                    commits = await get_commits_of_repository(
+                        profile_link=student.github_link,
+                        repository_name=data["repository"],
+                    )
+                    if isinstance(commits, dict):
+                        checked_list_text.append(
+                            md.text(
+                                f"{student.name} ❌ | {student.github_link}/{data['repository']}"
+                            )
+                        )
+                        continue
+
+                    for commit in commits:
+                        if commit_name in commit["commit"]["message"]:
+                            checked_list_text.append(
+                                md.text(
+                                    f"{student.name} ✅ | {student.github_link}/{data['repository']}"
+                                )
+                            )
+                            is_continue = True
+                            break
+
+                    if is_continue:
+                        continue
+
+                    checked_list_text.append(
+                        md.text(
+                            f"{student.name} ❌ | {student.github_link}/{data['repository']}"
+                        )
+                    )
+
+                except Exception as e_info:
+                    print(e_info)
+                    logger.error(e_info)
+                    return
+
+            checked_list = md.text(*checked_list_text, sep="\n")
+
+        from aiogram.utils.exceptions import MessageTextIsEmpty
+
+        try:
+            await bot.send_message(
+                message.chat.id, checked_list, reply_markup=types.ReplyKeyboardRemove()
+            )
+        except MessageTextIsEmpty:
+            await message.reply(NO_GROUPS)
 
     await state.finish()
 

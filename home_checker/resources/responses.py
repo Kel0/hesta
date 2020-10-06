@@ -3,7 +3,8 @@ COMMANDS = (
     "Get list of groups - /groups_list \n"
     "Create group - /group \n"
     "Get students - /students \n"
-    "Create students - /create_students"
+    "Create students - /create_students \n"
+    "Check for commit - /check_commits"
 )
 SEND_GROUP = "Send group name..."
 GROUP_FAIL = "Group hasn't been created"
@@ -19,3 +20,6 @@ GROUP_NON = "No group have found. Please create group before creating student"
 STUDENT_SUCCESS = "Student(s) created successfully"
 STUDENT_FAIL = "Student(s) have not created"
 FAIL = "Something went wrong..."
+SEND_GIT_REPO = (
+    "Send github repo. name and commit name in format: \n" "Repo. name - commit name"
+)

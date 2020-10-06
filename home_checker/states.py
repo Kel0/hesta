@@ -11,3 +11,8 @@ class StudentsForm(StatesGroup):
 
 class CreateStudentForm(StatesGroup):
     group = State()
+
+
+class Github(StatesGroup):
+    group = State()
+    repository = State()
