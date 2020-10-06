@@ -28,7 +28,7 @@ def init_cancel_button() -> ReplyKeyboardMarkup:
 
 
 def init_n_count_keyboard_buttons(buttons) -> ReplyKeyboardMarkup:
-    kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=4)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=3)
     button_n = [
         eval(f"KeyboardButton(text='Get students of {button['text']}')")
         for button in buttons
