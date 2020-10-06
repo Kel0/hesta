@@ -1,4 +1,6 @@
 import logging
+import re
+from typing import Dict, List
 
 import aiogram.utils.markdown as md
 from aiogram import Bot, Dispatcher, types
@@ -8,9 +10,31 @@ from aiogram.dispatcher.filters import Text
 
 from settings import API_TOKEN
 
-from .resources.responses import COMMANDS, WELCOME
-from .states import GroupForm
-from .utils import create_group, get_groups
+from .states import CreateStudentForm, GroupForm, StudentsForm
+
+from .utils import (  # isort:skip
+    create_group,
+    formalize_students_text,
+    get_groups,
+    get_students,
+    create_students,
+)
+
+from .resources.responses import (  # isort:skip
+    COMMANDS,
+    ENTER_GROUP_NAME,
+    GROUP_FAIL,
+    GROUP_SUCCESS,
+    NO_GROUPS,
+    NO_STUDENT,
+    SEND_GROUP,
+    WELCOME,
+    ENTER_STUDENT,
+    GROUP_NON,
+    STUDENT_SUCCESS,
+    STUDENT_FAIL,
+    FAIL,
+)
 
 from .buttons import (  # isort:skip
     init_cancel_button,
@@ -38,7 +62,7 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(Text(contains="Groups list", ignore_case=True))
 async def handle_groups_list(message: types.Message):
     groups = await get_groups()
-    groups_in_text = md.text("No groups have found")
+    groups_in_text = md.text(NO_GROUPS)
     keyboard = None
     groups_buttons = []
     groups_md_text = []
@@ -68,9 +92,7 @@ async def handle_group(message: types.Message):
     # Set state
     await GroupForm.group.set()
     # Answer
-    await message.reply(
-        "Please, enter the group name:", reply_markup=init_cancel_button()
-    )
+    await message.reply(ENTER_GROUP_NAME, reply_markup=init_cancel_button())
 
 
 @dp.message_handler(state=GroupForm.group)
@@ -90,13 +112,79 @@ async def process_group(message: types.Message, state: FSMContext):
     if status:
         await bot.send_message(
             message.chat.id,
-            "Group created successfully",
+            GROUP_SUCCESS,
             reply_markup=keyboard_remove(),
         )
     else:
         await bot.send_message(
-            message.chat.id, "Group hasn't been created", reply_markup=keyboard_remove()
+            message.chat.id, GROUP_FAIL, reply_markup=keyboard_remove()
         )
+    await state.finish()
+
+
+@dp.message_handler(commands=["students"])
+@dp.message_handler(Text(contains="Get students", ignore_case=True))
+async def handle_students(message: types.Message):
+    """
+    Allow user to get students of some group
+    :param message: Telegram chat's message
+    :return:
+    """
+    group_name: List[str] = re.findall(r"([\d]{1,3}\D+)", message.text)
+
+    if len(group_name) > 0:
+        group_name_str = group_name[0].upper()
+        students = await get_students(group=group_name_str)
+        if students is None:
+            await message.reply(FAIL, reply_markup=types.ReplyKeyboardRemove())
+            return
+
+        text = formalize_students_text(students=students)
+        await message.reply(text, reply_markup=types.ReplyKeyboardRemove())
+
+    elif len(group_name) == 0:
+        await StudentsForm.group.set()
+        await message.reply(SEND_GROUP, reply_markup=init_cancel_button())
+
+
+@dp.message_handler(state=StudentsForm.group)
+async def process_students_by_group(message: types.Message, state: FSMContext):
+    group_name = message.text.upper()
+    students = await get_students(group=group_name)
+
+    if students:
+        text = formalize_students_text(students=students)
+        await message.reply(text, reply_markup=types.ReplyKeyboardRemove())
+    else:
+        await message.reply(NO_STUDENT, reply_markup=types.ReplyKeyboardRemove())
+    await state.finish()
+
+
+@dp.message_handler(commands=["create_students"])
+async def handle_create_student(message: types.Message):
+    await CreateStudentForm.group.set()
+    await message.reply(ENTER_STUDENT, reply_markup=init_cancel_button())
+
+
+@dp.message_handler(state=CreateStudentForm.group)
+async def add_student(message: types.Message, state: FSMContext):
+    students_list: List[Dict[str, str]] = [
+        {
+            "name": element.split("-")[0].strip(),
+            "group": element.split("-")[1].strip().upper(),
+            "link": element.split("-")[2].strip(),
+        }
+        for element in message.text.split(",")
+    ]
+    status = await create_students(students=students_list)
+
+    if status == "No group":
+        await message.reply(GROUP_NON, reply_markup=types.ReplyKeyboardRemove())
+    elif status:
+        await message.reply(STUDENT_SUCCESS, reply_markup=types.ReplyKeyboardRemove())
+    elif status is None:
+        await message.reply(STUDENT_FAIL, reply_markup=types.ReplyKeyboardRemove())
+
     await state.finish()
 
 
