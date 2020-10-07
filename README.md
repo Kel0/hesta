@@ -1,6 +1,6 @@
 # hesta
 Open source project <strong>hesta</strong> - https://t.me/HestaOpenBot \
-Hesta intended to check github repos. for commits present.
+Hesta is intended to check github repos. for commits present.
  
 
 # Easy for self-deploy

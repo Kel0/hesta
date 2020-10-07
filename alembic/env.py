@@ -2,7 +2,7 @@ from logging.config import fileConfig
 import os
 import sys
 
-sys.path.append("../home_checker")
+sys.path.append("../hesta")
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool

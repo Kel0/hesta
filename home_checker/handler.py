@@ -150,9 +150,12 @@ async def handle_students(message: types.Message):
             groups = []
 
         await StudentsForm.group.set()
-        await message.reply(SEND_GROUP, reply_markup=init_n_count_keyboard_buttons(
-            [{"text": group.group} for group in groups], ""
-        ))
+        await message.reply(
+            SEND_GROUP,
+            reply_markup=init_n_count_keyboard_buttons(
+                [{"text": group.group} for group in groups], ""
+            ),
+        )
 
 
 @dp.message_handler(state=StudentsForm.group)
@@ -184,6 +187,7 @@ async def add_student(message: types.Message, state: FSMContext):
         }
         for element in message.text.split(",")
     ]
+    print(students_list)
     status = await create_students(students=students_list)
 
     if status == "No group":

@@ -1,4 +1,4 @@
-WELCOME = "Hi mate. This bot intended for check github repo. commits🤖"
+WELCOME = "Hi mate. This bot is intended for check github repo. commits🤖"
 COMMANDS = (
     "Commands📝: \n"
     "- Get list of groups - /groups_list \n"

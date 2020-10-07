@@ -57,7 +57,7 @@ def formalize_students_text(students: List[Students]) -> str:
     return md.text(*reply_text, sep="\n")
 
 
-async def create_students(students) -> Optional[Union[str, bool]]:
+async def create_students(students) -> Union[str, bool]:
     sqlalchemy_session: Session = session()
 
     for student in students:
@@ -79,8 +79,7 @@ async def create_students(students) -> Optional[Union[str, bool]]:
                 )
             )
             sqlalchemy_session.commit()
-            return True
         except Exception as e_info:
             logger.error(e_info)
-
-    return None
+            return False
+    return True
