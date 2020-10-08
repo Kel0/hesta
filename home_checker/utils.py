@@ -49,9 +49,9 @@ async def get_students(group: str) -> Optional[List[Students]]:
 
 def formalize_students_text(students: List[Students]) -> str:
     reply_text = [md.text(f"Students count: {len(students)}")]
-    for student in students:
+    for index, student in enumerate(students):
         reply_text.append(
-            md.text(f"{student.name} | Github link: {student.github_link}")
+            md.text(f"{index + 1}. {student.name} | Github link: {student.github_link}")
         )
 
     return md.text(*reply_text, sep="\n")
