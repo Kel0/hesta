@@ -186,8 +186,8 @@ async def add_student(message: types.Message, state: FSMContext):
             "link": element.split("-")[2].strip(),
         }
         for element in message.text.split(",")
+        if len(element) > 0
     ]
-    print(students_list)
     status = await create_students(students=students_list)
 
     if status == "No group":
